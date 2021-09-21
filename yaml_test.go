@@ -271,6 +271,10 @@ func TestJSONToYAML(t *testing.T) {
 			`{"t":null}`,
 			"t: null\n",
 			nil,
+		},{
+			`{"t":"this is very long line with spaces and it must be longer than 80 so we will repeat that it must be longer that 80"}`,
+			"t: this is very long line with spaces and it must be longer than 80 so we will repeat\n  that it must be longer that 80\n",
+			nil,
 		},
 	}
 
