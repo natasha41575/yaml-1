@@ -106,8 +106,8 @@ type yamlToJSONTestcase struct {
 	json string
 	// By default we test that reversing the output == input. But if there is a
 	// difference in the reversed output, you can optionally specify it here.
-	yaml_reverse_overwrite *string
-	err                    errorType
+	yamlReverseOverwrite *string
+	err                  errorType
 }
 
 type testYAMLToJSONFunc = func(yamlBytes []byte) ([]byte, error)
@@ -156,8 +156,8 @@ func testYAMLToJSON(t *testing.T, f testYAMLToJSONFunc, tests map[string]yamlToJ
 			correctYamlString := test.yaml
 
 			// If a special reverse string was specified, use that instead.
-			if test.yaml_reverse_overwrite != nil {
-				correctYamlString = *test.yaml_reverse_overwrite
+			if test.yamlReverseOverwrite != nil {
+				correctYamlString = *test.yamlReverseOverwrite
 			}
 
 			// Check it against the expected output.
@@ -631,63 +631,63 @@ func TestYAMLToJSON(t *testing.T) {
 			json: `{"t":null}`,
 		},
 		"boolean value": {
-			yaml:                   "t: True\n",
-			json:                   `{"t":true}`,
-			yaml_reverse_overwrite: strPtr("t: true\n"),
+			yaml:                 "t: True\n",
+			json:                 `{"t":true}`,
+			yamlReverseOverwrite: strPtr("t: true\n"),
 		},
 		"boolean value (no)": {
-			yaml:                   "t: no\n",
-			json:                   `{"t":false}`,
-			yaml_reverse_overwrite: strPtr("t: false\n"),
+			yaml:                 "t: no\n",
+			json:                 `{"t":false}`,
+			yamlReverseOverwrite: strPtr("t: false\n"),
 		},
 		"integer value (2^53 + 1)": {
-			yaml:                   "t: 9007199254740993\n",
-			json:                   `{"t":9007199254740993}`,
-			yaml_reverse_overwrite: strPtr("t: 9007199254740993\n"),
+			yaml:                 "t: 9007199254740993\n",
+			json:                 `{"t":9007199254740993}`,
+			yamlReverseOverwrite: strPtr("t: 9007199254740993\n"),
 		},
 		"integer value (1000000000000000000000000000000000000)": {
-			yaml:                   "t: 1000000000000000000000000000000000000\n",
-			json:                   `{"t":1e+36}`,
-			yaml_reverse_overwrite: strPtr("t: 1e+36\n"),
+			yaml:                 "t: 1000000000000000000000000000000000000\n",
+			json:                 `{"t":1e+36}`,
+			yamlReverseOverwrite: strPtr("t: 1e+36\n"),
 		},
 		"line-wrapped string value": {
 			yaml: "t: this is very long line with spaces and it must be longer than 80 so we will repeat\n  that it must be longer that 80\n",
 			json: `{"t":"this is very long line with spaces and it must be longer than 80 so we will repeat that it must be longer that 80"}`,
 		},
 		"empty yaml value": {
-			yaml:                   "t: ",
-			json:                   `{"t":null}`,
-			yaml_reverse_overwrite: strPtr("t: null\n"),
+			yaml:                 "t: ",
+			json:                 `{"t":null}`,
+			yamlReverseOverwrite: strPtr("t: null\n"),
 		},
 		"boolean key": {
-			yaml:                   "True: a",
-			json:                   `{"true":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"true\": a\n"),
+			yaml:                 "True: a",
+			json:                 `{"true":"a"}`,
+			yamlReverseOverwrite: strPtr("\"true\": a\n"),
 		},
 		"boolean key (no)": {
-			yaml:                   "no: a",
-			json:                   `{"false":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"false\": a\n"),
+			yaml:                 "no: a",
+			json:                 `{"false":"a"}`,
+			yamlReverseOverwrite: strPtr("\"false\": a\n"),
 		},
 		"integer key": {
-			yaml:                   "1: a",
-			json:                   `{"1":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"1\": a\n"),
+			yaml:                 "1: a",
+			json:                 `{"1":"a"}`,
+			yamlReverseOverwrite: strPtr("\"1\": a\n"),
 		},
 		"float key": {
-			yaml:                   "1.2: a",
-			json:                   `{"1.2":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"1.2\": a\n"),
+			yaml:                 "1.2: a",
+			json:                 `{"1.2":"a"}`,
+			yamlReverseOverwrite: strPtr("\"1.2\": a\n"),
 		},
 		"large integer key": {
-			yaml:                   "1000000000000000000000000000000000000: a",
-			json:                   `{"1e+36":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"1e+36\": a\n"),
+			yaml:                 "1000000000000000000000000000000000000: a",
+			json:                 `{"1e+36":"a"}`,
+			yamlReverseOverwrite: strPtr("\"1e+36\": a\n"),
 		},
 		"large integer key (scientific notation)": {
-			yaml:                   "1e+36: a",
-			json:                   `{"1e+36":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"1e+36\": a\n"),
+			yaml:                 "1e+36: a",
+			json:                 `{"1e+36":"a"}`,
+			yamlReverseOverwrite: strPtr("\"1e+36\": a\n"),
 		},
 		"string key (large integer as string)": {
 			yaml: "\"1e+36\": a\n",
@@ -706,37 +706,37 @@ func TestYAMLToJSON(t *testing.T) {
 			json: `[{"t":"a"},{"t":{"b":1,"c":2}}]`,
 		},
 		"nested struct array (json notation)": {
-			yaml:                   `[{t: a}, {t: {b: 1, c: 2}}]`,
-			json:                   `[{"t":"a"},{"t":{"b":1,"c":2}}]`,
-			yaml_reverse_overwrite: strPtr("- t: a\n- t:\n    b: 1\n    c: 2\n"),
+			yaml:                 `[{t: a}, {t: {b: 1, c: 2}}]`,
+			json:                 `[{"t":"a"},{"t":{"b":1,"c":2}}]`,
+			yamlReverseOverwrite: strPtr("- t: a\n- t:\n    b: 1\n    c: 2\n"),
 		},
 		"empty struct value": {
-			yaml:                   "- t: ",
-			json:                   `[{"t":null}]`,
-			yaml_reverse_overwrite: strPtr("- t: null\n"),
+			yaml:                 "- t: ",
+			json:                 `[{"t":null}]`,
+			yamlReverseOverwrite: strPtr("- t: null\n"),
 		},
 		"null struct value": {
 			yaml: "- t: null\n",
 			json: `[{"t":null}]`,
 		},
 		"binary data": {
-			yaml:                   "a: !!binary gIGC",
-			json:                   `{"a":"\ufffd\ufffd\ufffd"}`,
-			yaml_reverse_overwrite: strPtr("a: \ufffd\ufffd\ufffd\n"),
+			yaml:                 "a: !!binary gIGC",
+			json:                 `{"a":"\ufffd\ufffd\ufffd"}`,
+			yamlReverseOverwrite: strPtr("a: \ufffd\ufffd\ufffd\n"),
 		},
 
 		// Cases that should produce errors.
 		"~ key": {
-			yaml:                   "~: a",
-			json:                   `{"null":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"null\": a\n"),
-			err:                    fatalErrorsType,
+			yaml:                 "~: a",
+			json:                 `{"null":"a"}`,
+			yamlReverseOverwrite: strPtr("\"null\": a\n"),
+			err:                  fatalErrorsType,
 		},
 		"null key": {
-			yaml:                   "null: a",
-			json:                   `{"null":"a"}`,
-			yaml_reverse_overwrite: strPtr("\"null\": a\n"),
-			err:                    fatalErrorsType,
+			yaml:                 "null: a",
+			json:                 `{"null":"a"}`,
+			yamlReverseOverwrite: strPtr("\"null\": a\n"),
+			err:                  fatalErrorsType,
 		},
 	}
 
@@ -753,9 +753,9 @@ func TestYAMLToJSONStrictFails(t *testing.T) {
 	tests := map[string]yamlToJSONTestcase{
 		// expect YAMLtoJSON to pass on duplicate field names
 		"duplicate struct value": {
-			yaml:                   "foo: bar\nfoo: baz\n",
-			json:                   `{"foo":"baz"}`,
-			yaml_reverse_overwrite: strPtr("foo: baz\n"),
+			yaml:                 "foo: bar\nfoo: baz\n",
+			json:                 `{"foo":"baz"}`,
+			yamlReverseOverwrite: strPtr("foo: baz\n"),
 		},
 	}
 
