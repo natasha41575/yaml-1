@@ -45,21 +45,21 @@ type JSONOpt func(*json.Decoder) *json.Decoder
 //
 // Important notes about the Unmarshal logic:
 //
-//  - Decoding is case-insensitive, unlike the rest of Kubernetes API machinery, as this is using the stdlib json library. This might be confusing to users.
-//  - This decodes any number (although it is an integer) into a float64 if the type of obj is unknown, e.g. *map[string]interface{}, *interface{}, or *[]interface{}. This means integers above +/- 2^53 will lose precision when round-tripping. Make a JSONOpt that calls d.UseNumber() to avoid this.
-//  - Duplicate fields, including in-case-sensitive matches, are ignored in an undefined order. Note that the YAML specification forbids duplicate fields, so this logic is more permissive than it needs to. See UnmarshalStrict for an alternative.
-//  - Unknown fields, i.e. serialized data that do not map to a field in obj, are ignored. Use d.DisallowUnknownFields() or UnmarshalStrict to override.
-//  - As per the YAML 1.1 specification, which yaml.v2 used underneath implements, literal 'yes' and 'no' strings without quotation marks will be converted to true/false implicitly.
-//  - YAML non-string keys, e.g. ints, bools and floats, are converted to strings implicitly during the YAML to JSON conversion process.
-//  - There are no compatibility guarantees for returned error values.
+//   - Decoding is case-insensitive, unlike the rest of Kubernetes API machinery, as this is using the stdlib json library. This might be confusing to users.
+//   - This decodes any number (although it is an integer) into a float64 if the type of obj is unknown, e.g. *map[string]interface{}, *interface{}, or *[]interface{}. This means integers above +/- 2^53 will lose precision when round-tripping. Make a JSONOpt that calls d.UseNumber() to avoid this.
+//   - Duplicate fields, including in-case-sensitive matches, are ignored in an undefined order. Note that the YAML specification forbids duplicate fields, so this logic is more permissive than it needs to. See UnmarshalStrict for an alternative.
+//   - Unknown fields, i.e. serialized data that do not map to a field in obj, are ignored. Use d.DisallowUnknownFields() or UnmarshalStrict to override.
+//   - As per the YAML 1.1 specification, which yaml.v2 used underneath implements, literal 'yes' and 'no' strings without quotation marks will be converted to true/false implicitly.
+//   - YAML non-string keys, e.g. ints, bools and floats, are converted to strings implicitly during the YAML to JSON conversion process.
+//   - There are no compatibility guarantees for returned error values.
 func Unmarshal(yamlBytes []byte, obj interface{}, opts ...JSONOpt) error {
 	return unmarshal(yamlBytes, obj, yaml.Unmarshal, opts...)
 }
 
 // UnmarshalStrict is similar to Unmarshal (please read its documentation for reference), with the following exceptions:
 //
-//  - Duplicate fields in an object yield an error. This is according to the YAML specification.
-//  - If obj, or any of its recursive children, is a struct, presence of fields in the serialized data unknown to the struct will yield an error.
+//   - Duplicate fields in an object yield an error. This is according to the YAML specification.
+//   - If obj, or any of its recursive children, is a struct, presence of fields in the serialized data unknown to the struct will yield an error.
 func UnmarshalStrict(yamlBytes []byte, obj interface{}, opts ...JSONOpt) error {
 	return unmarshal(yamlBytes, obj, yaml.UnmarshalStrict, append(opts, DisallowUnknownFields)...)
 }
@@ -96,9 +96,9 @@ func jsonUnmarshal(reader io.Reader, obj interface{}, opts ...JSONOpt) error {
 
 // JSONToYAML converts JSON to YAML. Notable implementation details:
 //
-//  - Duplicate fields, are case-sensitively ignored in an undefined order.
-//  - The sequence indentation style is compact, which means that the "- " marker for a YAML sequence will be on the same indentation level as the sequence field name.
-//  - Unlike Unmarshal, all integers, up to 64 bits, are preserved during this round-trip.
+//   - Duplicate fields, are case-sensitively ignored in an undefined order.
+//   - The sequence indentation style is compact, which means that the "- " marker for a YAML sequence will be on the same indentation level as the sequence field name.
+//   - Unlike Unmarshal, all integers, up to 64 bits, are preserved during this round-trip.
 func JSONToYAML(j []byte) ([]byte, error) {
 	// Convert the JSON to an object.
 	var jsonObj interface{}
@@ -126,13 +126,13 @@ func JSONToYAML(j []byte) ([]byte, error) {
 // passing JSON through this method should be a no-op.
 //
 // Some things YAML can do that are not supported by JSON:
-// * In YAML you can have binary and null keys in your maps. These are invalid
-//   in JSON, and therefore int, bool and float keys are converted to strings implicitly.
-// * Binary data in YAML with the !!binary tag is not supported. If you want to
-//   use binary data with this library, encode the data as base64 as usual but do
-//   not use the !!binary tag in your YAML. This will ensure the original base64
-//   encoded data makes it all the way through to the JSON.
-// * And more... read the YAML specification for more details.
+//   - In YAML you can have binary and null keys in your maps. These are invalid
+//     in JSON, and therefore int, bool and float keys are converted to strings implicitly.
+//   - Binary data in YAML with the !!binary tag is not supported. If you want to
+//     use binary data with this library, encode the data as base64 as usual but do
+//     not use the !!binary tag in your YAML. This will ensure the original base64
+//     encoded data makes it all the way through to the JSON.
+//   - And more... read the YAML specification for more details.
 //
 // Notable about the implementation:
 //
