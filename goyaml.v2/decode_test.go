@@ -9,7 +9,7 @@ import (
 	"time"
 
 	. "gopkg.in/check.v1"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml/goyaml.v2"
 )
 
 var unmarshalIntTest = 123

@@ -26,7 +26,7 @@ import (
 	"time"
 
 	. "gopkg.in/check.v1"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml/goyaml.v3"
 )
 
 var unmarshalIntTest = 123

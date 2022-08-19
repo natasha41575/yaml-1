@@ -21,8 +21,8 @@ import (
 	"os"
 
 	. "gopkg.in/check.v1"
-	"gopkg.in/yaml.v3"
 	"io"
+	"sigs.k8s.io/yaml/goyaml.v3"
 	"strings"
 )
 
