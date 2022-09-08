@@ -22,7 +22,7 @@ jobs:
     - name: Run gofmt
       run: diff -u <(echo -n) <(gofmt -d *.go)
     - name: Run golint
-      run: diff -u <(echo -n) <(golint $(go list -e ./...) | grep -v YAMLToJSON)
+      run: diff -u <(echo -n) <(golint $(go list -e ./... | grep -v /goyaml) | grep -v YAMLToJSON)
     - name: Run go vet
       run: GO111MODULE=on go vet .
     - name: Run go test
