@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/google/go-cmp/cmp"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -832,8 +832,8 @@ func TestJSONObjectToYAMLObject(t *testing.T) {
 			got := JSONObjectToYAMLObject(tt.input)
 			sortMapSlicesInPlace(tt.expected)
 			sortMapSlicesInPlace(got)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("jsonToYAML() = %v, want %v", spew.Sdump(got), spew.Sdump(tt.expected))
+			if !reflect.DeepEqual(tt.expected, got) {
+				t.Errorf("jsonToYAML() returned unexpected results (-want+got):\n%v", cmp.Diff(tt.expected, got))
 			}
 
 			jsonBytes, err := json.Marshal(tt.input)
@@ -872,7 +872,8 @@ func TestJSONObjectToYAMLObject(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got, gotByRoundtrip) {
-				t.Errorf("yaml.Unmarshal(json.Marshal(tt.input)) = %v, want %v\njson: %s", spew.Sdump(gotByRoundtrip), spew.Sdump(got), string(jsonBytes))
+				t.Errorf("yaml.Unmarshal(json.Marshal(tt.input)) returned unexpected results (-want+got):\n%v", cmp.Diff(got, gotByRoundtrip))
+				t.Errorf("json: %s", string(jsonBytes))
 			}
 		})
 	}
