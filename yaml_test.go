@@ -17,6 +17,7 @@ limitations under the License.
 package yaml
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -26,7 +27,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	yaml "sigs.k8s.io/yaml/goyaml.v2"
+	yamlv2 "sigs.k8s.io/yaml/goyaml.v2"
+	yamlv3 "sigs.k8s.io/yaml/goyaml.v3"
 )
 
 /* Test helper functions */
@@ -128,7 +130,7 @@ func testYAMLToJSON(t *testing.T, f testYAMLToJSONFunc, tests map[string]yamlToJ
 			// Convert Yaml to Json
 			jsonBytes, err := f([]byte(test.yaml))
 			if err != nil && test.err == noErrorsType {
-				t.Errorf("Failed to convert YAML to JSON, yaml: `%s`, err: %v", test.yaml, err)
+				t.Errorf("Failed to convert YAML to JSON, yamlv2: `%s`, err: %v", test.yaml, err)
 			}
 			if err == nil && test.err&fatalErrorsType != 0 {
 				t.Errorf("expected a fatal error, but no fatal error was returned, yaml: `%s`", test.yaml)
@@ -785,10 +787,10 @@ func TestJSONObjectToYAMLObject(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    map[string]interface{}
-		expected yaml.MapSlice
+		expected yamlv2.MapSlice
 	}{
-		{name: "nil", expected: yaml.MapSlice(nil)},
-		{name: "empty", input: map[string]interface{}{}, expected: yaml.MapSlice(nil)},
+		{name: "nil", expected: yamlv2.MapSlice(nil)},
+		{name: "empty", input: map[string]interface{}{}, expected: yamlv2.MapSlice(nil)},
 		{
 			name: "values",
 			input: map[string]interface{}{
@@ -808,11 +810,11 @@ func TestJSONObjectToYAMLObject(t *testing.T) {
 				"string":             string("foo"),
 				"uint64 big":         bigUint64,
 			},
-			expected: yaml.MapSlice{
+			expected: yamlv2.MapSlice{
 				{Key: "nil slice"},
 				{Key: "nil map"},
 				{Key: "empty slice", Value: []interface{}{}},
-				{Key: "empty map", Value: yaml.MapSlice(nil)},
+				{Key: "empty map", Value: yamlv2.MapSlice(nil)},
 				{Key: "bool", Value: true},
 				{Key: "float64", Value: float64(42.1)},
 				{Key: "fractionless", Value: int(42)},
@@ -820,7 +822,7 @@ func TestJSONObjectToYAMLObject(t *testing.T) {
 				{Key: "int64", Value: int(42)},
 				{Key: "int64 big", Value: intOrInt64(int64(1) << 62)},
 				{Key: "negative int64 big", Value: intOrInt64(-(1 << 62))},
-				{Key: "map", Value: yaml.MapSlice{{Key: "foo", Value: "bar"}}},
+				{Key: "map", Value: yamlv2.MapSlice{{Key: "foo", Value: "bar"}}},
 				{Key: "slice", Value: []interface{}{"foo", "bar"}},
 				{Key: "string", Value: string("foo")},
 				{Key: "uint64 big", Value: bigUint64},
@@ -840,12 +842,12 @@ func TestJSONObjectToYAMLObject(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected json.Marshal error: %v", err)
 			}
-			var gotByRoundtrip yaml.MapSlice
-			if err := yaml.Unmarshal(jsonBytes, &gotByRoundtrip); err != nil {
+			var gotByRoundtrip yamlv2.MapSlice
+			if err := yamlv2.Unmarshal(jsonBytes, &gotByRoundtrip); err != nil {
 				t.Fatalf("unexpected yaml.Unmarshal error: %v", err)
 			}
 
-			// yaml.Unmarshal loses precision, it's rounding to the 4th last digit.
+			// yamlv2.Unmarshal loses precision, it's rounding to the 4th last digit.
 			// Replicate this here in the test, but don't change the type.
 			for i := range got {
 				switch got[i].Key {
@@ -885,9 +887,65 @@ func sortMapSlicesInPlace(x interface{}) {
 		for i := range x {
 			sortMapSlicesInPlace(x[i])
 		}
-	case yaml.MapSlice:
+	case yamlv2.MapSlice:
 		sort.Slice(x, func(a, b int) bool {
 			return x[a].Key.(string) < x[b].Key.(string)
 		})
+	}
+}
+
+func TestPatchedYamlV3AndUpstream(t *testing.T) {
+	input := `group: apps
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: deploy1
+spec:
+  template:
+    spec:
+      containers:
+      - image: nginx:1.7.9
+        name: nginx-tagged
+      - image: nginx:latest
+        name: nginx-latest
+      - image: foobar:1
+        name: replaced-with-digest
+      - image: postgres:1.8.0
+        name: postgresdb
+      initContainers:
+      - image: nginx
+        name: nginx-notag
+      - image: nginx@sha256:111111111111111111
+        name: nginx-sha256
+      - image: alpine:1.8.0
+        name: init-alpine
+`
+
+	var v3Map map[string]interface{}
+	var v2Map map[string]interface{}
+
+	// unmarshal the input into the two maps
+	if err := yamlv3.Unmarshal([]byte(input), &v3Map); err != nil {
+		t.Fatal(err)
+	}
+	if err := yamlv2.Unmarshal([]byte(input), &v2Map); err != nil {
+		t.Fatal(err)
+	}
+
+	// marshal using non-default settings from the yaml v3 fork
+	var buf bytes.Buffer
+	enc := yamlv3.NewEncoder(&buf)
+	enc.CompactSeqIndent()
+	enc.SetIndent(2)
+	err := enc.Encode(v3Map)
+	v3output := buf.String()
+
+	// marshal using the yaml v2 fork
+	v2output, err := yamlv2.Marshal(v2Map)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v3output != string(v2output) {
+		t.Fatalf("expected\n%s\ngot\n%s", string(v2output), v3output)
 	}
 }
