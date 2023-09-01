@@ -1167,8 +1167,15 @@ func yaml_emitter_process_head_comment(emitter *yaml_emitter_t) bool {
 }
 
 // Write an line comment.
-func yaml_emitter_process_line_comment(emitter *yaml_emitter_t) bool {
+func yaml_emitter_process_line_comment_linebreak(emitter *yaml_emitter_t, linebreak bool) bool {
 	if len(emitter.line_comment) == 0 {
+		// The next 3 lines are needed to resolve an issue with leading newlines
+		// See https://github.com/go-yaml/yaml/issues/755
+		// When linebreak is set to true, put_break will be called and will add
+		// the needed newline.
+		if linebreak && !put_break(emitter) {
+			return false
+		}
 		return true
 	}
 	if !emitter.whitespace {
@@ -1917,7 +1924,7 @@ func yaml_emitter_write_literal_scalar(emitter *yaml_emitter_t, value []byte) bo
 	if !yaml_emitter_write_block_scalar_hints(emitter, value) {
 		return false
 	}
-	if !yaml_emitter_process_line_comment(emitter) {
+	if !yaml_emitter_process_line_comment_linebreak(emitter, true) {
 		return false
 	}
 	//emitter.indention = true
@@ -1954,7 +1961,7 @@ func yaml_emitter_write_folded_scalar(emitter *yaml_emitter_t, value []byte) boo
 	if !yaml_emitter_write_block_scalar_hints(emitter, value) {
 		return false
 	}
-	if !yaml_emitter_process_line_comment(emitter) {
+	if !yaml_emitter_process_line_comment_linebreak(emitter, true) {
 		return false
 	}
 

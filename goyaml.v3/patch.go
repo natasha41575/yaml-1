@@ -31,3 +31,9 @@ func (e *Encoder) CompactSeqIndent() {
 func (e *Encoder) DefaultSeqIndent() {
 	e.encoder.emitter.compact_sequence_indent = false
 }
+
+// yaml_emitter_process_line_comment preserves the original signature and delegates to
+// yaml_emitter_process_line_comment_linebreak passing false for linebreak
+func yaml_emitter_process_line_comment(emitter *yaml_emitter_t) bool {
+	return yaml_emitter_process_line_comment_linebreak(emitter, false)
+}
